@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus IA</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #14161c;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        #chat-container {
+            border: 2px solid #3a3f4a;
+            border-radius: 12px;
+            padding: 20px;
+            height: 300px;
+            overflow-y: scroll;
+            background-color: #1e2128;
+            width: 80%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        #user-input {
+            display: flex;
+            align-items: center;
+            width: 80%;
+            margin-top: 20px;
+        }
+
+        #user-message {
+            flex-grow: 1;
+            margin-right: 10px;
+            padding: 10px;
+            border: 1px solid #3a3f4a;
+            border-radius: 12px;
+            background-color: #1e2128;
+            color: #ffffff;
+            outline: none;
+        }
+
+        #send-button {
+            padding: 12px;
+            cursor: pointer;
+            background-color: #4f8cff;
+            color: #ffffff;
+            border: none;
+            border-radius: 12px;
+            transition: background-color 0.3s;
+        }
+
+        #send-button:hover {
+            background-color: #4073aa;
+        }
+
+        #loading-indicator {
+            display: none;
+            margin-right: 10px;
+            color: #4f8cff;
+        }
+    </style>
+    <!-- Inclua a biblioteca jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+</head>
+
+<body>
+    <div id="chat-container"></div>
+    <div id="user-input">
+        <input type="text" id="user-message" placeholder="Digite sua mensagem" onkeydown="if (event.key === 'Enter') sendMessage()">
+        <button id="send-button" onclick="sendMessage()">Enviar</button>
+        <div id="loading-indicator" style="display: none;">Carregando...</div>
+    </div>
+
+    <script>
+        function sendMessage() {
+            var userMessage = document.getElementById("user-message").value;
+            appendMessage("Você:", userMessage);
+            document.getElementById("loading-indicator").style.display = "inline";
+
+            fetch('/get_response', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ question: userMessage }),  // Alterado para 'question'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    var chatbotResponse = data.response;
+                    appendMessage("Chatbot:", chatbotResponse);
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    appendMessage("Chatbot:", "Desculpe, algo deu errado ao processar sua solicitação.");
+                })
+                .finally(() => {
+                    document.getElementById("loading-indicator").style.display = "none";
+                });
+
+            document.getElementById("user-message").value = "";
+        }
+
+        function appendMessage(sender, message) {
+            var chatContainer = document.getElementById("chat-container");
+            var messageElement = document.createElement("div");
+            messageElement.innerHTML = "<strong>" + sender + "</strong>: " + message;
+            chatContainer.appendChild(messageElement);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    </script>
+</body>
+
+</html>
